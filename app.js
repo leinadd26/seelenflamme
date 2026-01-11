@@ -556,7 +556,6 @@ function resetAllData() {
             hoursRemaining: 24,
             maxHours: 24,
             lastUpdate: Date.now(),
-            streak: 0,
             lastActiveDate: null,
             activities: [...defaultActivities],
             verseHistory: [],
