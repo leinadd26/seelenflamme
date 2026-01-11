@@ -1,23 +1,18 @@
 // ===== VERSION + CHANGELOG =====
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.0.0";
 
 const CHANGELOG = [
   {
-    version: "1.2.0",
+    version: "1.0.0",
     date: "2026-01-11",
     changes: [
+      "Settings-Seite: Aktivitäten hinzufügen/bearbeiten/löschen, Emoji wählen",
+      "Gesamtzeit konfigurierbar",
       "Timer pausiert nachts (22:00–07:00)",
       "Flamme wird stufenweise grau statt kleiner",
       "Overscroll/weißer Rand entfernt",
-      "Größere Vers-Auswahl + weniger Wiederholungen"
-    ]
-  },
-  {
-    version: "1.1.0",
-    date: "2026-01-10",
-    changes: [
-      "Settings-Seite (Aktivitäten bearbeiten, hinzufügen, löschen)",
-      "Gesamtzeit konfigurierbar"
+      "Große Vers-Auswahl + weniger Wiederholungen (History-Algorithmus)",
+      "Update Log Fixed"
     ]
   }
 ];
