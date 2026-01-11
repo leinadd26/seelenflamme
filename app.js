@@ -402,24 +402,13 @@ timeLeftEl.textContent = isNightTime()
 
 
 function renderActivities() {
-    activityGrid.innerHTML = state.activities.map(act => `
-        <button class="activity-btn" data-id="${act.id}">
-            <span class="activity-icon">${act.icon}</span>
-            <span class="activity-name">${act.name}</span>
-            <span class="activity-time">+${act.hours}h</span>
-        </button>
-    `).join('');
-    
-    document.querySelectorAll('.activity-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = parseInt(btn.dataset.id);
-            const activity = state.activities.find(a => a.id === id);
-            if (activity) {
-                addHours(activity.hours, btn);
-                state.hoursRemaining = Math.min(state.maxHours, state.hoursRemaining + activity.hours);
-            }
-        });
-    });
+  activityGrid.innerHTML = state.activities.map(act => `
+    <button class="activity-btn" data-id="${act.id}">
+      <span class="activity-icon">${act.icon}</span>
+      <span class="activity-name">${act.name}</span>
+      <span class="activity-time">+${act.hours}h</span>
+    </button>
+  `).join('');
 }
 
 function renderSettingsActivities() {
@@ -725,12 +714,61 @@ renderActivities();
 setupDevTools();
 applyDevModeUI();
 save();
-setInterval(drain, 1000);
+if (window.__sfDrainTimer) clearInterval(window.__sfDrainTimer);
+window.__sfDrainTimer = setInterval(drain, 1000);
 renderChangelog();
 showUpdateModalIfNeeded();
+bindActivityGridOnce();
+bindDevToolsOnce();
 
 
 // Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+function bindActivityGridOnce() {
+  if (!activityGrid) return;
+
+  // onclick überschreibt alte Handler -> verhindert Doppelungen
+  activityGrid.onclick = (e) => {
+    const btn = e.target.closest('.activity-btn');
+    if (!btn) return;
+
+    const id = Number(btn.dataset.id);
+    const act = state.activities.find(a => a.id === id);
+    if (!act) return;
+
+    addHours(act.hours, btn);
+  };
+}
+
+function bindDevToolsOnce() {
+  if (!devTools) return;
+
+  devTools.onclick = (e) => {
+    if (!state.devMode) return;
+    initDevSimIfNeeded();
+
+    // minus buttons
+    const deltaBtn = e.target.closest('.dev-btn[data-delta]');
+    if (deltaBtn) {
+      const delta = parseFloat(deltaBtn.dataset.delta);
+      devSim.hoursRemaining = clampHours(devSim.hoursRemaining + delta);
+      devSim.lastUpdate = Date.now();
+      updateUI();
+      return;
+    }
+
+    // speed button
+    const speedBtn = e.target.closest('#devSpeedBtn');
+    if (speedBtn) {
+      const idx = DEV_SPEEDS.indexOf(devSim.speed);
+      devSim.speed = DEV_SPEEDS[(idx + 1) % DEV_SPEEDS.length];
+      devSim.lastUpdate = Date.now();
+      devSpeedBtn.textContent = `⏩ Speed: ${devSim.speed}x (Dev)`;
+      updateUI();
+      return;
+    }
+  };
 }
