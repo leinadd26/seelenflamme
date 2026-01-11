@@ -12,7 +12,8 @@ const CHANGELOG = [
       "Flamme wird stufenweise grau statt kleiner",
       "Overscroll/weißer Rand entfernt",
       "Große Vers-Auswahl + weniger Wiederholungen (History-Algorithmus)",
-      "Update Log Fixed"
+      "Update Log Fixed",
+      "Fixed Time UI 9h 60min -> 10h"
     ]
   }
 ];
