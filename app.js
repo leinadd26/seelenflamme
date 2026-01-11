@@ -176,6 +176,39 @@ const closeUpdateModalBtn = $('closeUpdateModal');
 const devTools = document.getElementById('devTools');
 const devModeToggle = document.getElementById('devModeToggle');
 const flameGray = $('flameGray');
+const devSpeedBtn = document.getElementById('devSpeedBtn');
+
+
+const DEV_SPEEDS = [1, 5, 20, 60]; // 1x, 5x, 20x, 60x
+
+let devSim = {
+  hoursRemaining: null, // nur Anzeige/Simulation
+  lastUpdate: null,
+  speed: 1
+};
+
+function clampHours(v) {
+  return Math.max(0, Math.min(state.maxHours, v));
+}
+
+function initDevSimIfNeeded() {
+  if (!state.devMode) return;
+  if (devSim.hoursRemaining === null) devSim.hoursRemaining = state.hoursRemaining;
+  if (!devSim.lastUpdate) devSim.lastUpdate = Date.now();
+}
+
+function resetDevSim() {
+  devSim = { hoursRemaining: null, lastUpdate: null, speed: 1 };
+  if (devSpeedBtn) devSpeedBtn.textContent = `⏩ Speed: 1x (Dev)`;
+}
+
+function getDisplayHoursRemaining() {
+  if (state.devMode) {
+    initDevSimIfNeeded();
+    return devSim.hoursRemaining;
+  }
+  return state.hoursRemaining;
+}
 
 
 let editingActivityId = null;
@@ -321,7 +354,8 @@ function checkStreak() {
 
 // === UI UPDATE ===
 function updateUI() {
-    const percent = Math.max(0, (state.hoursRemaining / state.maxHours) * 100);
+    const displayHours = getDisplayHoursRemaining();
+    const percent = Math.max(0, (displayHours / state.maxHours) * 100);
     
     
 const clamped = Math.max(0, Math.min(100, percent));
@@ -344,9 +378,9 @@ if (flameGray) {
     // Text
     percentageEl.textContent = Math.round(percent) + '%';
     
-    const totalMinutes = Math.max(0, Math.floor(state.hoursRemaining * 60));
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
+   const totalMinutes = Math.max(0, Math.floor(displayHours * 60));
+const h = Math.floor(totalMinutes / 60);
+const m = totalMinutes % 60;
     
     if (isNightTime()) {
         timeLeftEl.textContent = `🌙 Nachtruhe – Timer pausiert`;
@@ -358,7 +392,14 @@ if (flameGray) {
     
     // Streak
     streakCountEl.textContent = state.streak;
+
+    const devPrefix = state.devMode ? `[DEV x${devSim.speed}] ` : '';
+// und dann:
+timeLeftEl.textContent = isNightTime()
+  ? `${devPrefix}Nachtruhe – Timer pausiert`
+  : (displayHours > 0 ? `${devPrefix}Noch ${h}h ${m}m` : `${devPrefix}Zeit zum Aufladen!`);
 }
+
 
 function renderActivities() {
     activityGrid.innerHTML = state.activities.map(act => `
@@ -532,19 +573,35 @@ function resetAllData() {
 
 // === DRAIN ===
 function drain() {
-    // Nachts nicht drainieren
-    if (isNightTime()) {
-        state.lastUpdate = Date.now();
-        save();
-        updateUI();
-        return;
+  const now = Date.now();
+
+  // Nachtruhe: beides pausieren, aber echte Werte nicht "drainen"
+  if (isNightTime()) {
+    state.lastUpdate = now;
+    if (state.devMode) {
+      initDevSimIfNeeded();
+      devSim.lastUpdate = now;
     }
-    
-    const elapsed = (Date.now() - state.lastUpdate) / (1000 * 60 * 60);
-    state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsed);
-    state.lastUpdate = Date.now();
     save();
     updateUI();
+    return;
+  }
+
+  // ECHT: normaler Drain
+  const elapsedReal = (now - state.lastUpdate) / (1000 * 60 * 60);
+  state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsedReal);
+  state.lastUpdate = now;
+
+  // DEV: Simulation zusätzlich schneller drainen (ohne state zu ändern!)
+  if (state.devMode) {
+    initDevSimIfNeeded();
+    const elapsedSim = (now - devSim.lastUpdate) / (1000 * 60 * 60);
+    devSim.hoursRemaining = clampHours(devSim.hoursRemaining - elapsedSim * devSim.speed);
+    devSim.lastUpdate = now;
+  }
+
+  save();
+  updateUI();
 }
 
 function applyDevModeUI() {
@@ -555,20 +612,34 @@ function applyDevModeUI() {
 function setupDevTools() {
   if (!devTools) return;
 
-  // Buttons nur 1x verdrahten:
-  devTools.querySelectorAll('.dev-btn').forEach(btn => {
+  // minus-Buttons
+  devTools.querySelectorAll('.dev-btn[data-delta]').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (!state.devMode) return;
+      initDevSimIfNeeded();
+
       const delta = parseFloat(btn.dataset.delta); // negativ
+      devSim.hoursRemaining = clampHours(devSim.hoursRemaining + delta);
+      devSim.lastUpdate = Date.now();
 
-      // rein technisch Zeit ändern (ohne "Aktivität" zu loggen)
-      state.hoursRemaining = Math.max(0, Math.min(state.maxHours, state.hoursRemaining + delta));
-      state.lastUpdate = Date.now();
-
-      save();
       updateUI();
-      applyDevModeUI();
     });
   });
+
+  // speed button
+  if (devSpeedBtn) {
+    devSpeedBtn.addEventListener('click', () => {
+      if (!state.devMode) return;
+      initDevSimIfNeeded();
+
+      const idx = DEV_SPEEDS.indexOf(devSim.speed);
+      devSim.speed = DEV_SPEEDS[(idx + 1) % DEV_SPEEDS.length];
+      devSim.lastUpdate = Date.now();
+
+      devSpeedBtn.textContent = `⏩ Speed: ${devSim.speed}x (Dev)`;
+      updateUI();
+    });
+  }
 
   applyDevModeUI();
 }
@@ -607,7 +678,15 @@ if (devModeToggle) {
   devModeToggle.addEventListener('change', () => {
     state.devMode = !!devModeToggle.checked;
     save();
+
+    if (state.devMode) {
+      initDevSimIfNeeded();
+    } else {
+      resetDevSim();
+    }
+
     applyDevModeUI();
+    updateUI();
   });
 }
 
@@ -650,6 +729,7 @@ save();
 setInterval(drain, 1000);
 renderChangelog();
 showUpdateModalIfNeeded();
+
 
 // Service Worker
 if ('serviceWorker' in navigator) {
