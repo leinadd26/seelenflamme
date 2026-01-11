@@ -177,6 +177,7 @@ const devTools = document.getElementById('devTools');
 const devModeToggle = document.getElementById('devModeToggle');
 const flameGray = $('flameGray');
 
+
 let editingActivityId = null;
 let selectedEmoji = '🙏';
 
@@ -326,15 +327,14 @@ function updateUI() {
 const clamped = Math.max(0, Math.min(100, percent));
 
 if (flameGray) {
-  // je mehr Zeit übrig, desto mehr wird unten "weggeclippt"
-  // 100% => inset bottom 100% (Overlay unsichtbar)
-  // 0%   => inset bottom 0%   (Overlay voll sichtbar)
+  // 100% -> bottomInset=100% => Overlay unsichtbar
+  // 0%   -> bottomInset=0%   => Overlay vollständig sichtbar
   const bottomInset = clamped;
 
   flameGray.style.clipPath = `inset(0 0 ${bottomInset}% 0)`;
   flameGray.style.webkitClipPath = `inset(0 0 ${bottomInset}% 0)`;
 
-  // Optional: bei ~100% komplett ausblenden, um 1px Artefakte zu vermeiden
+  // optional: bei (fast) 100% komplett aus, damit keine 1px Artefakte entstehen
   flameGray.style.opacity = clamped >= 99.9 ? '0' : '0.9';
 }
     
