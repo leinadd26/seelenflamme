@@ -155,17 +155,48 @@ main {
     opacity: 0.8;
 }
 
+.flame {
+  position: relative;
+}
+
+/* Graues Overlay, wird per clip-path von oben nach unten sichtbar */
+.flame-gray{
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #ff6b00 0%, #ffcc00 50%, #fff5cc 100%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  filter: grayscale(1);
+  opacity: 0.9;
+  pointer-events: none;
+
+  /* standard: komplett versteckt */
+  clip-path: inset(0 0 100% 0);
+  -webkit-clip-path: inset(0 0 100% 0);
+
+  transition: clip-path 0.25s linear, -webkit-clip-path 0.25s linear;
+  animation: flicker 2s ease-in-out infinite;
+}
+
+/* Optional: innerer “Kern” auch im Overlay (wird durch grayscale ebenfalls grau) */
+.flame-gray::before{
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 50%;
+  background: linear-gradient(0deg, #fff 0%, #ffeb99 100%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  opacity: 0.8;
+}
+
 @keyframes flicker {
     0%, 100% { transform: scale(1) rotate(-1deg); }
     50% { transform: scale(0.98) rotate(1deg); }
 }
 
-/* Flamme Graustufen je nach Prozent */
-.flame-inner.level-80 { filter: grayscale(15%); opacity: 0.95; }
-.flame-inner.level-60 { filter: grayscale(35%); opacity: 0.85; }
-.flame-inner.level-40 { filter: grayscale(55%); opacity: 0.75; }
-.flame-inner.level-20 { filter: grayscale(75%); opacity: 0.60; }
-.flame-inner.level-0 { filter: grayscale(95%); opacity: 0.40; }
+
 
 .percentage {
     font-size: 2.5rem;
