@@ -138,6 +138,7 @@ main {
     background: linear-gradient(0deg, #ff6b00 0%, #ffcc00 50%, #fff5cc 100%);
     border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
     transition: filter 0.5s ease, opacity 0.5s ease;
+    animation: flicker 2s ease-in-out infinite;
     position: relative;
 }
 
