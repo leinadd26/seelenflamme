@@ -315,18 +315,12 @@ function updateUI() {
     const percent = Math.max(0, (state.hoursRemaining / state.maxHours) * 100);
     
     // Flamme Graustufen
-    flameInner.className = 'flame-inner';
-    if (percent <= 20) {
-        flameInner.classList.add('level-0');
-    } else if (percent <= 40) {
-        flameInner.classList.add('level-20');
-    } else if (percent <= 60) {
-        flameInner.classList.add('level-40');
-    } else if (percent <= 80) {
-        flameInner.classList.add('level-60');
-    } else if (percent < 100) {
-        flameInner.classList.add('level-80');
-    }
+    // 0..1 (0 = voll farbig, 1 = fast ganz grau)
+const gray = Math.min(1, Math.max(0, (100 - percent) / 100));
+
+// fließend grau + etwas dunkler/transparenter
+flameInner.style.filter = `grayscale(${gray * 0.95})`;
+flameInner.style.opacity = `${1 - gray * 0.6}`;
     
     // Glow anpassen
     flameGlow.style.opacity = percent / 100;
