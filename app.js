@@ -8,7 +8,7 @@ const defaultActivities = [
     { id: 6, icon: '💭', name: 'Stille Zeit', hours: 1 }
 ];
 
-// === BIBELVERSE ===
+// === 100 BIBELVERSE ===
 const verses = [
     { text: "Denn Gott hat uns nicht gegeben den Geist der Furcht, sondern der Kraft und der Liebe und der Besonnenheit.", ref: "2. Timotheus 1:7" },
     { text: "Der HERR ist mein Hirte, mir wird nichts mangeln.", ref: "Psalm 23:1" },
@@ -19,7 +19,95 @@ const verses = [
     { text: "Denn wo zwei oder drei in meinem Namen versammelt sind, da bin ich mitten unter ihnen.", ref: "Matthäus 18:20" },
     { text: "Ich vermag alles durch den, der mich stark macht, Christus.", ref: "Philipper 4:13" },
     { text: "Denn aus Gnade seid ihr gerettet durch Glauben, und das nicht aus euch: Gottes Gabe ist es.", ref: "Epheser 2:8" },
-    { text: "Und ob ich schon wanderte im finstern Tal, fürchte ich kein Unglück; denn du bist bei mir.", ref: "Psalm 23:4" }
+    { text: "Und ob ich schon wanderte im finstern Tal, fürchte ich kein Unglück; denn du bist bei mir.", ref: "Psalm 23:4" },
+    { text: "Denn also hat Gott die Welt geliebt, dass er seinen eingeborenen Sohn gab.", ref: "Johannes 3:16" },
+    { text: "Der Herr ist mein Licht und mein Heil; vor wem sollte ich mich fürchten?", ref: "Psalm 27:1" },
+    { text: "Seid fröhlich in Hoffnung, geduldig in Trübsal, beharrlich im Gebet.", ref: "Römer 12:12" },
+    { text: "Denn ich weiß wohl, was ich für Gedanken über euch habe: Gedanken des Friedens.", ref: "Jeremia 29:11" },
+    { text: "Gott ist unsre Zuversicht und Stärke, eine Hilfe in den großen Nöten.", ref: "Psalm 46:2" },
+    { text: "Befiehl dem HERRN deine Wege und hoffe auf ihn, er wird's wohlmachen.", ref: "Psalm 37:5" },
+    { text: "Die auf den HERRN harren, kriegen neue Kraft.", ref: "Jesaja 40:31" },
+    { text: "Seid stark und mutig! Fürchtet euch nicht vor ihnen! Der HERR, dein Gott, geht mit dir.", ref: "5. Mose 31:6" },
+    { text: "Kommt her zu mir, alle, die ihr mühselig und beladen seid; ich will euch erquicken.", ref: "Matthäus 11:28" },
+    { text: "Ich lasse dich nicht fallen und verlasse dich nicht.", ref: "Josua 1:5" },
+    { text: "Der HERR segne dich und behüte dich.", ref: "4. Mose 6:24" },
+    { text: "Schmecket und sehet, wie freundlich der HERR ist. Wohl dem, der auf ihn trauet!", ref: "Psalm 34:9" },
+    { text: "Lass dir an meiner Gnade genügen; denn meine Kraft ist in den Schwachen mächtig.", ref: "2. Korinther 12:9" },
+    { text: "Freuet euch in dem Herrn allewege, und abermals sage ich: Freuet euch!", ref: "Philipper 4:4" },
+    { text: "Denn wir wandeln im Glauben und nicht im Schauen.", ref: "2. Korinther 5:7" },
+    { text: "Rufe mich an in der Not, so will ich dich erretten.", ref: "Psalm 50:15" },
+    { text: "Gott ist Liebe; und wer in der Liebe bleibt, der bleibt in Gott und Gott in ihm.", ref: "1. Johannes 4:16" },
+    { text: "Wenn ihr mich von ganzem Herzen suchen werdet, so will ich mich von euch finden lassen.", ref: "Jeremia 29:13" },
+    { text: "Der HERR ist nahe denen, die zerbrochenen Herzens sind.", ref: "Psalm 34:19" },
+    { text: "Trachtet zuerst nach dem Reich Gottes und nach seiner Gerechtigkeit.", ref: "Matthäus 6:33" },
+    { text: "So sehr hat Gott die Welt geliebt, dass er seinen einzigen Sohn hingab.", ref: "Johannes 3:16" },
+    { text: "Ich bin bei euch alle Tage bis an der Welt Ende.", ref: "Matthäus 28:20" },
+    { text: "Der Glaube aber ist eine feste Zuversicht dessen, was man hofft.", ref: "Hebräer 11:1" },
+    { text: "Die Frucht des Geistes ist Liebe, Freude, Friede, Geduld, Freundlichkeit.", ref: "Galater 5:22" },
+    { text: "Sei getreu bis an den Tod, so will ich dir die Krone des Lebens geben.", ref: "Offenbarung 2:10" },
+    { text: "Der HERR ist meine Stärke und mein Schild; auf ihn hofft mein Herz.", ref: "Psalm 28:7" },
+    { text: "Und der Friede Gottes, der höher ist als alle Vernunft, bewahre eure Herzen.", ref: "Philipper 4:7" },
+    { text: "Denn das Wort Gottes ist lebendig und kräftig.", ref: "Hebräer 4:12" },
+    { text: "Bittet, so wird euch gegeben; suchet, so werdet ihr finden.", ref: "Matthäus 7:7" },
+    { text: "Denn der Lohn der Sünde ist der Tod; die Gabe Gottes aber ist das ewige Leben.", ref: "Römer 6:23" },
+    { text: "Ich bin die Auferstehung und das Leben. Wer an mich glaubt, wird leben.", ref: "Johannes 11:25" },
+    { text: "Niemand hat größere Liebe als die, dass er sein Leben lässt für seine Freunde.", ref: "Johannes 15:13" },
+    { text: "Dein Wort ist meines Fußes Leuchte und ein Licht auf meinem Wege.", ref: "Psalm 119:105" },
+    { text: "Prüfet alles und das Gute behaltet.", ref: "1. Thessalonicher 5:21" },
+    { text: "Einer trage des andern Last, so werdet ihr das Gesetz Christi erfüllen.", ref: "Galater 6:2" },
+    { text: "Ich bin der Weinstock, ihr seid die Reben. Wer in mir bleibt, bringt viel Frucht.", ref: "Johannes 15:5" },
+    { text: "Was ihr getan habt einem von diesen meinen geringsten Brüdern, das habt ihr mir getan.", ref: "Matthäus 25:40" },
+    { text: "Sorget nicht um den morgigen Tag, denn der morgige Tag wird für das Seine sorgen.", ref: "Matthäus 6:34" },
+    { text: "Ich will dich unterweisen und dir den Weg zeigen, den du gehen sollst.", ref: "Psalm 32:8" },
+    { text: "Denn meine Gedanken sind nicht eure Gedanken, spricht der HERR.", ref: "Jesaja 55:8" },
+    { text: "Er heilt, die zerbrochenen Herzens sind, und verbindet ihre Wunden.", ref: "Psalm 147:3" },
+    { text: "Das Gras verdorrt, die Blume verwelkt, aber das Wort unseres Gottes bleibt ewiglich.", ref: "Jesaja 40:8" },
+    { text: "Selig sind, die da Leid tragen; denn sie sollen getröstet werden.", ref: "Matthäus 5:4" },
+    { text: "Selig sind die Barmherzigen; denn sie werden Barmherzigkeit erlangen.", ref: "Matthäus 5:7" },
+    { text: "Selig sind, die reinen Herzens sind; denn sie werden Gott schauen.", ref: "Matthäus 5:8" },
+    { text: "Selig sind die Friedfertigen; denn sie werden Gottes Kinder heißen.", ref: "Matthäus 5:9" },
+    { text: "Du sollst den Herrn, deinen Gott, lieben von ganzem Herzen.", ref: "Matthäus 22:37" },
+    { text: "Du sollst deinen Nächsten lieben wie dich selbst.", ref: "Matthäus 22:39" },
+    { text: "Richtet nicht, damit ihr nicht gerichtet werdet.", ref: "Matthäus 7:1" },
+    { text: "Alles, was ihr wollt, dass euch die Leute tun sollen, das tut ihnen auch.", ref: "Matthäus 7:12" },
+    { text: "Das ist mein Gebot, dass ihr euch untereinander liebt, wie ich euch liebe.", ref: "Johannes 15:12" },
+    { text: "Wer unter euch ohne Sünde ist, der werfe den ersten Stein.", ref: "Johannes 8:7" },
+    { text: "Denn wo dein Schatz ist, da ist auch dein Herz.", ref: "Matthäus 6:21" },
+    { text: "Ich bin gekommen, damit sie das Leben haben und volle Genüge.", ref: "Johannes 10:10" },
+    { text: "Wer an mich glaubt, von dessen Leib werden Ströme lebendigen Wassers fließen.", ref: "Johannes 7:38" },
+    { text: "Wer sein Leben findet, der wird's verlieren; wer sein Leben verliert um meinetwillen, wird's finden.", ref: "Matthäus 10:39" },
+    { text: "Siehe, ich mache alles neu!", ref: "Offenbarung 21:5" },
+    { text: "Ihr seid das Salz der Erde.", ref: "Matthäus 5:13" },
+    { text: "Ihr seid das Licht der Welt.", ref: "Matthäus 5:14" },
+    { text: "Wenn euch der Sohn frei macht, so seid ihr wirklich frei.", ref: "Johannes 8:36" },
+    { text: "Der HERR ist gut, ein Schutz zur Zeit der Not.", ref: "Nahum 1:7" },
+    { text: "Seid barmherzig, wie auch euer Vater barmherzig ist.", ref: "Lukas 6:36" },
+    { text: "Vergeltet nicht Böses mit Bösem oder Scheltwort mit Scheltwort.", ref: "1. Petrus 3:9" },
+    { text: "Die Liebe ist langmütig und freundlich, die Liebe eifert nicht.", ref: "1. Korinther 13:4" },
+    { text: "Nun aber bleiben Glaube, Hoffnung, Liebe, diese drei; aber die Liebe ist die größte.", ref: "1. Korinther 13:13" },
+    { text: "Fürchte dich nicht vor ihnen; denn ich bin bei dir und will dich erretten.", ref: "Jeremia 1:8" },
+    { text: "Ich habe dich je und je geliebt, darum habe ich dich zu mir gezogen aus lauter Güte.", ref: "Jeremia 31:3" },
+    { text: "Denn bei Gott ist kein Ding unmöglich.", ref: "Lukas 1:37" },
+    { text: "Ehre deinen Vater und deine Mutter.", ref: "2. Mose 20:12" },
+    { text: "Euer Herz erschrecke nicht! Glaubt an Gott und glaubt an mich!", ref: "Johannes 14:1" },
+    { text: "In der Welt habt ihr Angst; aber seid getrost, ich habe die Welt überwunden.", ref: "Johannes 16:33" },
+    { text: "Siehe, ich stehe vor der Tür und klopfe an.", ref: "Offenbarung 3:20" },
+    { text: "Wer zu mir kommt, den werde ich nicht hinausstoßen.", ref: "Johannes 6:37" },
+    { text: "Und siehe, ich bin bei euch alle Tage bis an der Welt Ende.", ref: "Matthäus 28:20" },
+    { text: "Jesus Christus gestern und heute und derselbe auch in Ewigkeit.", ref: "Hebräer 13:8" },
+    { text: "Ich bin das A und das O, der Anfang und das Ende.", ref: "Offenbarung 21:6" },
+    { text: "Denn nichts kann uns scheiden von der Liebe Gottes.", ref: "Römer 8:39" },
+    { text: "Wir wissen, dass denen, die Gott lieben, alle Dinge zum Besten dienen.", ref: "Römer 8:28" },
+    { text: "Ist Gott für uns, wer kann wider uns sein?", ref: "Römer 8:31" },
+    { text: "Danket dem HERRN; denn er ist freundlich, und seine Güte währet ewiglich.", ref: "Psalm 136:1" },
+    { text: "Lobe den HERRN, meine Seele, und vergiss nicht, was er dir Gutes getan hat.", ref: "Psalm 103:2" },
+    { text: "Ich liege und schlafe ganz mit Frieden; denn allein du, HERR, hilfst mir.", ref: "Psalm 4:9" },
+    { text: "Der Engel des HERRN lagert sich um die her, die ihn fürchten, und hilft ihnen heraus.", ref: "Psalm 34:8" },
+    { text: "Wirf dein Anliegen auf den HERRN; der wird dich versorgen.", ref: "Psalm 55:23" },
+    { text: "Lehre mich tun nach deinem Wohlgefallen, denn du bist mein Gott.", ref: "Psalm 143:10" },
+    { text: "In deiner Hand steht meine Zeit.", ref: "Psalm 31:16" },
+    { text: "Ich aber will auf den HERRN schauen und harren auf den Gott meines Heils.", ref: "Micha 7:7" },
+    { text: "Denn er hat seinen Engeln befohlen, dass sie dich behüten auf allen deinen Wegen.", ref: "Psalm 91:11" }
 ];
 
 // === STATE ===
@@ -29,7 +117,9 @@ let state = {
     lastUpdate: Date.now(),
     streak: 0,
     lastActiveDate: null,
-    activities: [...defaultActivities]
+    activities: [...defaultActivities],
+    verseHistory: [],
+    currentVerseIndex: 0
 };
 
 // === DOM ELEMENTE ===
@@ -56,6 +146,51 @@ const emojiPicker = $('emojiPicker');
 let editingActivityId = null;
 let selectedEmoji = '🙏';
 
+// === NACHTMODUS CHECK ===
+function isNightTime() {
+    const hour = new Date().getHours();
+    return hour >= 22 || hour < 7;
+}
+
+// === BIBELVERS ALGORITHMUS (Wenig Wiederholungen) ===
+function getNextVerse() {
+    // Falls History voll ist, leeren
+    if (state.verseHistory.length >= verses.length - 10) {
+        state.verseHistory = [];
+    }
+    
+    // Zufälligen Vers finden der nicht in History ist
+    let availableIndices = [];
+    for (let i = 0; i < verses.length; i++) {
+        if (!state.verseHistory.includes(i)) {
+            availableIndices.push(i);
+        }
+    }
+    
+    const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+    state.verseHistory.push(randomIndex);
+    state.currentVerseIndex = randomIndex;
+    
+    return verses[randomIndex];
+}
+
+function showVerse() {
+    const today = new Date().toDateString();
+    const savedDate = localStorage.getItem('verseDate');
+    
+    let verse;
+    if (savedDate === today && state.currentVerseIndex !== undefined) {
+        verse = verses[state.currentVerseIndex];
+    } else {
+        verse = getNextVerse();
+        localStorage.setItem('verseDate', today);
+        save();
+    }
+    
+    verseEl.textContent = `"${verse.text}"`;
+    verseRefEl.textContent = verse.ref;
+}
+
 // === SPEICHERN & LADEN ===
 function save() {
     localStorage.setItem('seelenflamme', JSON.stringify(state));
@@ -67,12 +202,35 @@ function load() {
         const loaded = JSON.parse(saved);
         state = { ...state, ...loaded };
         
-        // Verstrichene Zeit berechnen
-        const elapsedHours = (Date.now() - state.lastUpdate) / (1000 * 60 * 60);
+        // Verstrichene Zeit berechnen (aber nicht nachts!)
+        const elapsedMs = Date.now() - state.lastUpdate;
+        const elapsedHours = calculateActiveHours(state.lastUpdate, Date.now());
+        
         state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsedHours);
         state.lastUpdate = Date.now();
     }
     checkStreak();
+}
+
+// === BERECHNE AKTIVE STUNDEN (Ohne Nachtzeit) ===
+function calculateActiveHours(startTime, endTime) {
+    let activeMs = 0;
+    let current = startTime;
+    
+    while (current < endTime) {
+        const date = new Date(current);
+        const hour = date.getHours();
+        
+        // Nicht nachts zählen (22:00 - 07:00)
+        if (hour >= 7 && hour < 22) {
+            const nextCheck = Math.min(current + 60000, endTime); // 1 Minute
+            activeMs += nextCheck - current;
+        }
+        
+        current += 60000; // 1 Minute vorwärts
+    }
+    
+    return activeMs / (1000 * 60 * 60); // In Stunden
 }
 
 function checkStreak() {
@@ -91,19 +249,38 @@ function checkStreak() {
 function updateUI() {
     const percent = Math.max(0, (state.hoursRemaining / state.maxHours) * 100);
     
-    flameInner.style.height = Math.max(10, percent) + '%';
+    // Flamme Graustufen
+    flameInner.className = 'flame-inner';
+    if (percent <= 20) {
+        flameInner.classList.add('level-0');
+    } else if (percent <= 40) {
+        flameInner.classList.add('level-20');
+    } else if (percent <= 60) {
+        flameInner.classList.add('level-40');
+    } else if (percent <= 80) {
+        flameInner.classList.add('level-60');
+    } else if (percent < 100) {
+        flameInner.classList.add('level-80');
+    }
+    
+    // Glow anpassen
     flameGlow.style.opacity = percent / 100;
     
+    // Text
     percentageEl.textContent = Math.round(percent) + '%';
     
     const h = Math.floor(state.hoursRemaining);
     const m = Math.round((state.hoursRemaining - h) * 60);
-    timeLeftEl.textContent = state.hoursRemaining > 0 
-        ? `Noch ${h}h ${m}m` 
-        : "Zeit zum Aufladen! 🙏";
     
-    flameContainer.classList.toggle('low', percent < 25);
+    if (isNightTime()) {
+        timeLeftEl.textContent = `🌙 Nachtruhe – Timer pausiert`;
+    } else if (state.hoursRemaining > 0) {
+        timeLeftEl.textContent = `Noch ${h}h ${m}m`;
+    } else {
+        timeLeftEl.textContent = "Zeit zum Aufladen! 🙏";
+    }
     
+    // Streak
     streakCountEl.textContent = state.streak;
 }
 
@@ -116,7 +293,6 @@ function renderActivities() {
         </button>
     `).join('');
     
-    // Event Listener
     document.querySelectorAll('.activity-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = parseInt(btn.dataset.id);
@@ -143,22 +319,13 @@ function renderSettingsActivities() {
         </div>
     `).join('');
     
-    // Edit buttons
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.id)));
     });
     
-    // Delete buttons
     document.querySelectorAll('.btn-delete').forEach(btn => {
         btn.addEventListener('click', () => deleteActivity(parseInt(btn.dataset.id)));
     });
-}
-
-function showVerse() {
-    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-    const verse = verses[dayOfYear % verses.length];
-    verseEl.textContent = `"${verse.text}"`;
-    verseRefEl.textContent = verse.ref;
 }
 
 // === AKTIVITÄT ===
@@ -208,7 +375,6 @@ function openEditModal(id = null) {
         selectedEmoji = '🙏';
     }
     
-    // Emoji Selection
     document.querySelectorAll('.emoji-option').forEach(el => {
         el.classList.toggle('selected', el.dataset.emoji === selectedEmoji);
     });
@@ -266,24 +432,36 @@ function closeSettings() {
 function resetAllData() {
     if (confirm('Wirklich alle Daten löschen? Das kann nicht rückgängig gemacht werden!')) {
         localStorage.removeItem('seelenflamme');
+        localStorage.removeItem('verseDate');
         state = {
             hoursRemaining: 24,
             maxHours: 24,
             lastUpdate: Date.now(),
             streak: 0,
             lastActiveDate: null,
-            activities: [...defaultActivities]
+            activities: [...defaultActivities],
+            verseHistory: [],
+            currentVerseIndex: 0
         };
         save();
         updateUI();
         renderActivities();
         renderSettingsActivities();
+        showVerse();
         closeSettings();
     }
 }
 
 // === DRAIN ===
 function drain() {
+    // Nachts nicht drainieren
+    if (isNightTime()) {
+        state.lastUpdate = Date.now();
+        save();
+        updateUI();
+        return;
+    }
+    
     const elapsed = (Date.now() - state.lastUpdate) / (1000 * 60 * 60);
     state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsed);
     state.lastUpdate = Date.now();
@@ -321,7 +499,6 @@ document.querySelectorAll('.emoji-option').forEach(el => {
     });
 });
 
-// Close modal on overlay click
 editModal.addEventListener('click', (e) => {
     if (e.target === editModal) closeEditModal();
 });
