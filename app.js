@@ -13,7 +13,8 @@ const CHANGELOG = [
       "Overscroll/weißer Rand entfernt",
       "Große Vers-Auswahl + weniger Wiederholungen (History-Algorithmus)",
       "Update Log Fixed",
-      "Fixed Time UI 9h 60min -> 10h"
+      "Fixed Time UI 9h 60min -> 10h",
+      "Dev Tools"
     ]
   }
 ];
@@ -142,7 +143,8 @@ let state = {
     lastActiveDate: null,
     activities: [...defaultActivities],
     verseHistory: [],
-    currentVerseIndex: 0
+    currentVerseIndex: 0,
+    devMode: false
 };
 
 // === DOM ELEMENTE ===
@@ -171,6 +173,8 @@ const updateModal = $('updateModal');
 const appVersionModalEl = $('appVersionModal');
 const updateModalListEl = $('updateModalList');
 const closeUpdateModalBtn = $('closeUpdateModal');
+const devTools = document.getElementById('devTools');
+const devModeToggle = document.getElementById('devModeToggle');
 
 let editingActivityId = null;
 let selectedEmoji = '🙏';
@@ -267,7 +271,7 @@ function load() {
     const saved = localStorage.getItem('seelenflamme');
     if (saved) {
         const loaded = JSON.parse(saved);
-        state = { ...state, ...loaded };
+        state = { ...state, ...loaded };state.devMode
         
         // Verstrichene Zeit berechnen (aber nicht nachts!)
         const elapsedMs = Date.now() - state.lastUpdate;
@@ -277,6 +281,7 @@ function load() {
         state.lastUpdate = Date.now();
     }
     checkStreak();
+    if (typeof state.devMode !== 'boolean') state.devMode = false;
 }
 
 // === BERECHNE AKTIVE STUNDEN (Ohne Nachtzeit) ===
@@ -361,6 +366,7 @@ function renderActivities() {
             const activity = state.activities.find(a => a.id === id);
             if (activity) {
                 addHours(activity.hours, btn);
+                state.hoursRemaining = Math.min(state.maxHours, state.hoursRemaining + activity.hours);
             }
         });
     });
@@ -485,6 +491,7 @@ function openSettings() {
     maxHoursValue.textContent = state.maxHours + ' Stunden';
     renderSettingsActivities();
     settingsPage.classList.add('open');
+    if (devModeToggle) devModeToggle.checked = !!state.devMode;
 }
 
 function closeSettings() {
@@ -531,6 +538,33 @@ function drain() {
     updateUI();
 }
 
+function applyDevModeUI() {
+  if (!devTools) return;
+  devTools.style.display = state.devMode ? 'flex' : 'none';
+}
+
+function setupDevTools() {
+  if (!devTools) return;
+
+  // Buttons nur 1x verdrahten:
+  devTools.querySelectorAll('.dev-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const delta = parseFloat(btn.dataset.delta); // negativ
+
+      // rein technisch Zeit ändern (ohne "Aktivität" zu loggen)
+      state.hoursRemaining = Math.max(0, Math.min(state.maxHours, state.hoursRemaining + delta));
+      state.lastUpdate = Date.now();
+
+      save();
+      updateUI();
+      applyDevModeUI();
+    });
+  });
+
+  applyDevModeUI();
+}
+
+
 // === EVENT LISTENER ===
 $('settingsBtn').addEventListener('click', openSettings);
 $('backBtn').addEventListener('click', closeSettings);
@@ -546,7 +580,6 @@ if (updateModal) {
         if (e.target === updateModal) closeUpdateModalAndMarkSeen();
     });
 }
-const devTools = document.getElementById('devTools');
 if (devTools) {
   devTools.style.display = DEV_MODE ? 'flex' : 'none';
 
@@ -561,6 +594,15 @@ if (devTools) {
     });
   });
 }
+if (devModeToggle) {
+  devModeToggle.addEventListener('change', () => {
+    state.devMode = !!devModeToggle.checked;
+    save();
+    applyDevModeUI();
+  });
+}
+
+
 
 maxHoursSlider.addEventListener('input', () => {
     state.maxHours = parseInt(maxHoursSlider.value);
@@ -593,6 +635,8 @@ load();
 showVerse();
 updateUI();
 renderActivities();
+setupDevTools();
+applyDevModeUI();
 save();
 setInterval(drain, 1000);
 renderChangelog();
