@@ -1,0 +1,17 @@
+{
+    "name": "Seelenflamme",
+    "short_name": "Seelenflamme",
+    "description": "Nähre deine Seele täglich",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#1a1a2e",
+    "theme_color": "#1a1a2e",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
