@@ -2,23 +2,18 @@
 const APP_VERSION = "1.0.0";
 
 const CHANGELOG = [
-  {
-    version: "1.0.0",
-    date: "2026-01-11",
-    changes: [
-      "Settings-Seite: Aktivitäten hinzufügen/bearbeiten/löschen, Emoji wählen",
-      "Gesamtzeit konfigurierbar",
-      "Timer pausiert nachts (22:00–07:00)",
-      "Flamme wird stufenweise grau statt kleiner",
-      "Overscroll/weißer Rand entfernt",
-      "Große Vers-Auswahl + weniger Wiederholungen (History-Algorithmus)",
-      "Update Log Fixed",
-      "Fixed Time UI 9h 60min -> 10h",
-      "Dev Tools"
-    ]
-  }
+    {
+        version: "1.0.0",
+        date: "2025-01-11",
+        changes: [
+            "Settings-Seite: Aktivitäten hinzufügen/bearbeiten/löschen, Emoji wählen",
+            "Gesamtzeit konfigurierbar",
+            "Timer pausiert nachts (22:00–07:00)",
+            "Flamme wird von oben nach unten grau",
+            "100 Bibelverse mit wenig Wiederholungen"
+        ]
+    }
 ];
-
 
 // === DEFAULT AKTIVITÄTEN ===
 const defaultActivities = [
@@ -29,8 +24,6 @@ const defaultActivities = [
     { id: 5, icon: '🤝', name: 'Gemeinschaft', hours: 2 },
     { id: 6, icon: '💭', name: 'Stille Zeit', hours: 1 }
 ];
-
-const DEV_MODE = true; // für Release auf false setzen
 
 // === 100 BIBELVERSE ===
 const verses = [
@@ -134,7 +127,7 @@ const verses = [
     { text: "Denn er hat seinen Engeln befohlen, dass sie dich behüten auf allen deinen Wegen.", ref: "Psalm 91:11" }
 ];
 
-// === STATE ===
+// === STATE (wird gespeichert) ===
 let state = {
     hoursRemaining: 24,
     maxHours: 24,
@@ -147,10 +140,28 @@ let state = {
     devMode: false
 };
 
+// === DEV SANDBOX (wird NICHT gespeichert, komplett separat) ===
+const DEV_SPEEDS = [1, 5, 20, 60, 120];
+let devSandbox = null; // null = nicht aktiv
+
+function createDevSandbox() {
+    return {
+        hoursRemaining: state.hoursRemaining,
+        maxHours: state.maxHours,
+        lastUpdate: Date.now(),
+        speed: 1
+    };
+}
+
+function destroyDevSandbox() {
+    devSandbox = null;
+}
+
 // === DOM ELEMENTE ===
 const $ = id => document.getElementById(id);
 const flameInner = $('flameInner');
 const flameGlow = $('flameGlow');
+const flameGray = $('flameGray');
 const flameContainer = $('flameContainer');
 const percentageEl = $('percentage');
 const timeLeftEl = $('timeLeft');
@@ -173,43 +184,9 @@ const updateModal = $('updateModal');
 const appVersionModalEl = $('appVersionModal');
 const updateModalListEl = $('updateModalList');
 const closeUpdateModalBtn = $('closeUpdateModal');
-const devTools = document.getElementById('devTools');
-const devModeToggle = document.getElementById('devModeToggle');
-const flameGray = $('flameGray');
-const devSpeedBtn = document.getElementById('devSpeedBtn');
-
-
-const DEV_SPEEDS = [1, 5, 20, 60]; // 1x, 5x, 20x, 60x
-
-let devSim = {
-  hoursRemaining: null, // nur Anzeige/Simulation
-  lastUpdate: null,
-  speed: 1
-};
-
-function clampHours(v) {
-  return Math.max(0, Math.min(state.maxHours, v));
-}
-
-function initDevSimIfNeeded() {
-  if (!state.devMode) return;
-  if (devSim.hoursRemaining === null) devSim.hoursRemaining = state.hoursRemaining;
-  if (!devSim.lastUpdate) devSim.lastUpdate = Date.now();
-}
-
-function resetDevSim() {
-  devSim = { hoursRemaining: null, lastUpdate: null, speed: 1 };
-  if (devSpeedBtn) devSpeedBtn.textContent = `⏩ Speed: 1x (Dev)`;
-}
-
-function getDisplayHoursRemaining() {
-  if (state.devMode) {
-    initDevSimIfNeeded();
-    return devSim.hoursRemaining;
-  }
-  return state.hoursRemaining;
-}
-
+const devTools = $('devTools');
+const devModeToggle = $('devModeToggle');
+const devSpeedBtn = $('devSpeedBtn');
 
 let editingActivityId = null;
 let selectedEmoji = '🙏';
@@ -220,14 +197,48 @@ function isNightTime() {
     return hour >= 22 || hour < 7;
 }
 
-// === BIBELVERS ALGORITHMUS (Wenig Wiederholungen) ===
+// === SPEICHERN & LADEN ===
+function save() {
+    localStorage.setItem('seelenflamme', JSON.stringify(state));
+}
+
+function load() {
+    const saved = localStorage.getItem('seelenflamme');
+    if (saved) {
+        const loaded = JSON.parse(saved);
+        state = { ...state, ...loaded };
+        
+        // Verstrichene Zeit berechnen (nur wenn nicht Nacht)
+        if (!isNightTime()) {
+            const elapsedHours = (Date.now() - state.lastUpdate) / (1000 * 60 * 60);
+            state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsedHours);
+        }
+        state.lastUpdate = Date.now();
+        
+        // Abwärtskompatibilität
+        if (typeof state.devMode !== 'boolean') state.devMode = false;
+    }
+    checkStreak();
+}
+
+function checkStreak() {
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    
+    if (state.lastActiveDate === yesterday && state.hoursRemaining > 0) {
+        state.streak++;
+    } else if (state.lastActiveDate !== today && state.lastActiveDate !== yesterday) {
+        state.streak = state.hoursRemaining > 0 ? 1 : 0;
+    }
+    state.lastActiveDate = today;
+}
+
+// === BIBELVERS ALGORITHMUS ===
 function getNextVerse() {
-    // Falls History voll ist, leeren
     if (state.verseHistory.length >= verses.length - 10) {
         state.verseHistory = [];
     }
     
-    // Zufälligen Vers finden der nicht in History ist
     let availableIndices = [];
     for (let i = 0; i < verses.length; i++) {
         if (!state.verseHistory.includes(i)) {
@@ -247,7 +258,7 @@ function showVerse() {
     const savedDate = localStorage.getItem('verseDate');
     
     let verse;
-    if (savedDate === today && state.currentVerseIndex !== undefined) {
+    if (savedDate === today && state.currentVerseIndex !== undefined && state.currentVerseIndex < verses.length) {
         verse = verses[state.currentVerseIndex];
     } else {
         verse = getNextVerse();
@@ -255,163 +266,93 @@ function showVerse() {
         save();
     }
     
-    verseEl.textContent = `"${verse.text}"`;
-    verseRefEl.textContent = verse.ref;
-}
-
-function renderChangelog() {
-    if (!changelogEl || !appVersionEl) return;
-
-    appVersionEl.textContent = APP_VERSION;
-
-    changelogEl.innerHTML = CHANGELOG.map(entry => `
-        <div class="changelog-item">
-          <div class="changelog-title">
-            <div>Version ${entry.version}</div>
-            <div class="changelog-date">${entry.date}</div>
-          </div>
-          <ul class="changelog-list">
-            ${entry.changes.map(c => `<li>${c}</li>`).join('')}
-          </ul>
-        </div>
-    `).join('');
-}
-
-function showUpdateModalIfNeeded() {
-    const lastSeen = localStorage.getItem('seelenflamme_lastSeenVersion') || "";
-    if (lastSeen === APP_VERSION) return;
-
-    // zeige Änderungen der aktuellen Version (erste im CHANGELOG)
-    const current = CHANGELOG.find(x => x.version === APP_VERSION) || CHANGELOG[0];
-
-    if (appVersionModalEl) appVersionModalEl.textContent = APP_VERSION;
-    if (updateModalListEl && current) {
-        updateModalListEl.innerHTML = current.changes.map(c => `<li>${c}</li>`).join('');
+    if (verse) {
+        verseEl.textContent = `"${verse.text}"`;
+        verseRefEl.textContent = verse.ref;
     }
-
-    if (updateModal) updateModal.classList.add('open');
 }
 
-function closeUpdateModalAndMarkSeen() {
-    localStorage.setItem('seelenflamme_lastSeenVersion', APP_VERSION);
-    if (updateModal) updateModal.classList.remove('open');
-}
-
-// === SPEICHERN & LADEN ===
-function save() {
-    localStorage.setItem('seelenflamme', JSON.stringify(state));
-}
-
-function load() {
-    const saved = localStorage.getItem('seelenflamme');
-    if (saved) {
-        const loaded = JSON.parse(saved);
-        state = { ...state, ...loaded };state.devMode
-        
-        // Verstrichene Zeit berechnen (aber nicht nachts!)
-        const elapsedMs = Date.now() - state.lastUpdate;
-        const elapsedHours = calculateActiveHours(state.lastUpdate, Date.now());
-        
-        state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsedHours);
-        state.lastUpdate = Date.now();
+// === ZEIT ERMITTELN (Real oder Sandbox) ===
+function getDisplayHours() {
+    if (state.devMode && devSandbox) {
+        return devSandbox.hoursRemaining;
     }
-    checkStreak();
-    if (typeof state.devMode !== 'boolean') state.devMode = false;
+    return state.hoursRemaining;
 }
 
-// === BERECHNE AKTIVE STUNDEN (Ohne Nachtzeit) ===
-function calculateActiveHours(startTime, endTime) {
-    let activeMs = 0;
-    let current = startTime;
-    
-    while (current < endTime) {
-        const date = new Date(current);
-        const hour = date.getHours();
-        
-        // Nicht nachts zählen (22:00 - 07:00)
-        if (hour >= 7 && hour < 22) {
-            const nextCheck = Math.min(current + 60000, endTime); // 1 Minute
-            activeMs += nextCheck - current;
-        }
-        
-        current += 60000; // 1 Minute vorwärts
+function getDisplayMaxHours() {
+    if (state.devMode && devSandbox) {
+        return devSandbox.maxHours;
     }
-    
-    return activeMs / (1000 * 60 * 60); // In Stunden
-}
-
-function checkStreak() {
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    
-    if (state.lastActiveDate === yesterday && state.hoursRemaining > 0) {
-        state.streak++;
-    } else if (state.lastActiveDate !== today && state.lastActiveDate !== yesterday) {
-        state.streak = state.hoursRemaining > 0 ? 1 : 0;
-    }
-    state.lastActiveDate = today;
+    return state.maxHours;
 }
 
 // === UI UPDATE ===
 function updateUI() {
-    const displayHours = getDisplayHoursRemaining();
-    const percent = Math.max(0, (displayHours / state.maxHours) * 100);
+    const displayHours = getDisplayHours();
+    const displayMax = getDisplayMaxHours();
+    const percent = Math.max(0, Math.min(100, (displayHours / displayMax) * 100));
     
-    
-const clamped = Math.max(0, Math.min(100, percent));
-
-if (flameGray) {
-  // 100% -> bottomInset=100% => Overlay unsichtbar
-  // 0%   -> bottomInset=0%   => Overlay vollständig sichtbar
-  const bottomInset = clamped;
-
-  flameGray.style.clipPath = `inset(0 0 ${bottomInset}% 0)`;
-  flameGray.style.webkitClipPath = `inset(0 0 ${bottomInset}% 0)`;
-
-  // optional: bei (fast) 100% komplett aus, damit keine 1px Artefakte entstehen
-  flameGray.style.opacity = clamped >= 99.9 ? '0' : '0.9';
-}
+    // Graues Overlay von oben nach unten
+    if (flameGray) {
+        const bottomInset = percent;
+        flameGray.style.clipPath = `inset(0 0 ${bottomInset}% 0)`;
+        flameGray.style.webkitClipPath = `inset(0 0 ${bottomInset}% 0)`;
+        flameGray.style.opacity = percent >= 99.9 ? '0' : '0.9';
+    }
     
     // Glow anpassen
-    flameGlow.style.opacity = percent / 100;
+    if (flameGlow) {
+        flameGlow.style.opacity = percent / 100;
+    }
     
     // Text
-    percentageEl.textContent = Math.round(percent) + '%';
+    if (percentageEl) {
+        percentageEl.textContent = Math.round(percent) + '%';
+    }
     
-   const totalMinutes = Math.max(0, Math.floor(displayHours * 60));
-const h = Math.floor(totalMinutes / 60);
-const m = totalMinutes % 60;
-    
-    if (isNightTime()) {
-        timeLeftEl.textContent = `🌙 Nachtruhe – Timer pausiert`;
-    } else if (state.hoursRemaining > 0) {
-        timeLeftEl.textContent = `Noch ${h}h ${m}m`;
-    } else {
-        timeLeftEl.textContent = "Zeit zum Aufladen! 🙏";
+    // Zeit-Anzeige
+    if (timeLeftEl) {
+        const totalMinutes = Math.max(0, Math.floor(displayHours * 60));
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        
+        let prefix = '';
+        if (state.devMode && devSandbox) {
+            prefix = `[DEV x${devSandbox.speed}] `;
+        }
+        
+        if (isNightTime() && !state.devMode) {
+            timeLeftEl.textContent = `🌙 Nachtruhe – Timer pausiert`;
+        } else if (displayHours > 0) {
+            timeLeftEl.textContent = `${prefix}Noch ${h}h ${m}m`;
+        } else {
+            timeLeftEl.textContent = `${prefix}Zeit zum Aufladen! 🙏`;
+        }
     }
     
     // Streak
-    streakCountEl.textContent = state.streak;
-
-    const devPrefix = state.devMode ? `[DEV x${devSim.speed}] ` : '';
-// und dann:
-timeLeftEl.textContent = isNightTime()
-  ? `${devPrefix}Nachtruhe – Timer pausiert`
-  : (displayHours > 0 ? `${devPrefix}Noch ${h}h ${m}m` : `${devPrefix}Zeit zum Aufladen!`);
+    if (streakCountEl) {
+        streakCountEl.textContent = state.streak;
+    }
 }
 
-
+// === AKTIVITÄTEN RENDERN ===
 function renderActivities() {
-  activityGrid.innerHTML = state.activities.map(act => `
-    <button class="activity-btn" data-id="${act.id}">
-      <span class="activity-icon">${act.icon}</span>
-      <span class="activity-name">${act.name}</span>
-      <span class="activity-time">+${act.hours}h</span>
-    </button>
-  `).join('');
+    if (!activityGrid) return;
+    
+    activityGrid.innerHTML = state.activities.map(act => `
+        <button class="activity-btn" data-id="${act.id}">
+            <span class="activity-icon">${act.icon}</span>
+            <span class="activity-name">${act.name}</span>
+            <span class="activity-time">+${act.hours}h</span>
+        </button>
+    `).join('');
 }
 
 function renderSettingsActivities() {
+    if (!activitiesList) return;
+    
     activitiesList.innerHTML = state.activities.map(act => `
         <div class="activity-item" data-id="${act.id}">
             <span class="activity-item-icon">${act.icon}</span>
@@ -425,24 +366,18 @@ function renderSettingsActivities() {
             </div>
         </div>
     `).join('');
-    
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.id)));
-    });
-    
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', () => deleteActivity(parseInt(btn.dataset.id)));
-    });
 }
 
-// === AKTIVITÄT ===
-function addHours(hours, btn) {
+// === STUNDEN HINZUFÜGEN (REAL) ===
+function addHoursReal(hours, btn) {
     state.hoursRemaining = Math.max(0, Math.min(state.maxHours, state.hoursRemaining + hours));
     state.lastUpdate = Date.now();
     state.lastActiveDate = new Date().toDateString();
     
-    btn.classList.add('pulse');
-    setTimeout(() => btn.classList.remove('pulse'), 400);
+    if (btn) {
+        btn.classList.add('pulse');
+        setTimeout(() => btn.classList.remove('pulse'), 400);
+    }
     
     if (navigator.vibrate) navigator.vibrate(50);
     
@@ -450,6 +385,22 @@ function addHours(hours, btn) {
     updateUI();
 }
 
+// === STUNDEN ÄNDERN (SANDBOX) ===
+function addHoursSandbox(hours, btn) {
+    if (!devSandbox) return;
+    
+    devSandbox.hoursRemaining = Math.max(0, Math.min(devSandbox.maxHours, devSandbox.hoursRemaining + hours));
+    devSandbox.lastUpdate = Date.now();
+    
+    if (btn) {
+        btn.classList.add('pulse');
+        setTimeout(() => btn.classList.remove('pulse'), 400);
+    }
+    
+    updateUI();
+}
+
+// === AKTIVITÄT LÖSCHEN ===
 function deleteActivity(id) {
     if (state.activities.length <= 1) {
         alert('Du brauchst mindestens eine Aktivität!');
@@ -469,6 +420,7 @@ function openEditModal(id = null) {
     
     if (id) {
         const act = state.activities.find(a => a.id === id);
+        if (!act) return;
         $('modalTitle').textContent = 'Aktivität bearbeiten';
         activityName.value = act.name;
         activityHours.value = act.hours;
@@ -505,9 +457,11 @@ function saveActivity() {
     
     if (editingActivityId) {
         const act = state.activities.find(a => a.id === editingActivityId);
-        act.name = name;
-        act.hours = hours;
-        act.icon = selectedEmoji;
+        if (act) {
+            act.name = name;
+            act.hours = hours;
+            act.icon = selectedEmoji;
+        }
     } else {
         const newId = Math.max(...state.activities.map(a => a.id), 0) + 1;
         state.activities.push({
@@ -526,11 +480,17 @@ function saveActivity() {
 
 // === SETTINGS ===
 function openSettings() {
-    maxHoursSlider.value = state.maxHours;
-    maxHoursValue.textContent = state.maxHours + ' Stunden';
+    if (maxHoursSlider) {
+        maxHoursSlider.value = state.maxHours;
+    }
+    if (maxHoursValue) {
+        maxHoursValue.textContent = state.maxHours + ' Stunden';
+    }
+    if (devModeToggle) {
+        devModeToggle.checked = state.devMode;
+    }
     renderSettingsActivities();
     settingsPage.classList.add('open');
-    if (devModeToggle) devModeToggle.checked = !!state.devMode;
 }
 
 function closeSettings() {
@@ -541,6 +501,7 @@ function resetAllData() {
     if (confirm('Wirklich alle Daten löschen? Das kann nicht rückgängig gemacht werden!')) {
         localStorage.removeItem('seelenflamme');
         localStorage.removeItem('verseDate');
+        localStorage.removeItem('seelenflamme_lastSeenVersion');
         state = {
             hoursRemaining: 24,
             maxHours: 24,
@@ -549,227 +510,291 @@ function resetAllData() {
             lastActiveDate: null,
             activities: [...defaultActivities],
             verseHistory: [],
-            currentVerseIndex: 0
+            currentVerseIndex: 0,
+            devMode: false
         };
+        destroyDevSandbox();
         save();
         updateUI();
         renderActivities();
         renderSettingsActivities();
         showVerse();
+        applyDevModeUI();
         closeSettings();
     }
 }
 
-// === DRAIN ===
-function drain() {
-  const now = Date.now();
-
-  // Nachtruhe: beides pausieren, aber echte Werte nicht "drainen"
-  if (isNightTime()) {
-    state.lastUpdate = now;
-    if (state.devMode) {
-      initDevSimIfNeeded();
-      devSim.lastUpdate = now;
-    }
-    save();
-    updateUI();
-    return;
-  }
-
-  // ECHT: normaler Drain
-  const elapsedReal = (now - state.lastUpdate) / (1000 * 60 * 60);
-  state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsedReal);
-  state.lastUpdate = now;
-
-  // DEV: Simulation zusätzlich schneller drainen (ohne state zu ändern!)
-  if (state.devMode) {
-    initDevSimIfNeeded();
-    const elapsedSim = (now - devSim.lastUpdate) / (1000 * 60 * 60);
-    devSim.hoursRemaining = clampHours(devSim.hoursRemaining - elapsedSim * devSim.speed);
-    devSim.lastUpdate = now;
-  }
-
-  save();
-  updateUI();
+// === CHANGELOG ===
+function renderChangelog() {
+    if (!changelogEl || !appVersionEl) return;
+    
+    appVersionEl.textContent = APP_VERSION;
+    
+    changelogEl.innerHTML = CHANGELOG.map(entry => `
+        <div class="changelog-item">
+            <div class="changelog-title">
+                <div>Version ${entry.version}</div>
+                <div class="changelog-date">${entry.date}</div>
+            </div>
+            <ul class="changelog-list">
+                ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+            </ul>
+        </div>
+    `).join('');
 }
 
+function showUpdateModalIfNeeded() {
+    const lastSeen = localStorage.getItem('seelenflamme_lastSeenVersion') || "";
+    if (lastSeen === APP_VERSION) return;
+    
+    const current = CHANGELOG.find(x => x.version === APP_VERSION) || CHANGELOG[0];
+    
+    if (appVersionModalEl) appVersionModalEl.textContent = APP_VERSION;
+    if (updateModalListEl && current) {
+        updateModalListEl.innerHTML = current.changes.map(c => `<li>${c}</li>`).join('');
+    }
+    
+    if (updateModal) updateModal.classList.add('open');
+}
+
+function closeUpdateModalAndMarkSeen() {
+    localStorage.setItem('seelenflamme_lastSeenVersion', APP_VERSION);
+    if (updateModal) updateModal.classList.remove('open');
+}
+
+// === DEV MODE ===
 function applyDevModeUI() {
-  if (!devTools) return;
-  devTools.style.display = state.devMode ? 'flex' : 'none';
-}
-
-function setupDevTools() {
-  if (!devTools) return;
-
-  // minus-Buttons
-  devTools.querySelectorAll('.dev-btn[data-delta]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (!state.devMode) return;
-      initDevSimIfNeeded();
-
-      const delta = parseFloat(btn.dataset.delta); // negativ
-      devSim.hoursRemaining = clampHours(devSim.hoursRemaining + delta);
-      devSim.lastUpdate = Date.now();
-
-      updateUI();
-    });
-  });
-
-  // speed button
-  if (devSpeedBtn) {
-    devSpeedBtn.addEventListener('click', () => {
-      if (!state.devMode) return;
-      initDevSimIfNeeded();
-
-      const idx = DEV_SPEEDS.indexOf(devSim.speed);
-      devSim.speed = DEV_SPEEDS[(idx + 1) % DEV_SPEEDS.length];
-      devSim.lastUpdate = Date.now();
-
-      devSpeedBtn.textContent = `⏩ Speed: ${devSim.speed}x (Dev)`;
-      updateUI();
-    });
-  }
-
-  applyDevModeUI();
-}
-
-
-// === EVENT LISTENER ===
-$('settingsBtn').addEventListener('click', openSettings);
-$('backBtn').addEventListener('click', closeSettings);
-$('addActivityBtn').addEventListener('click', () => openEditModal());
-$('cancelModal').addEventListener('click', closeEditModal);
-$('saveModal').addEventListener('click', saveActivity);
-$('resetBtn').addEventListener('click', resetAllData);
-if (closeUpdateModalBtn) {
-    closeUpdateModalBtn.addEventListener('click', closeUpdateModalAndMarkSeen);
-}
-if (updateModal) {
-    updateModal.addEventListener('click', (e) => {
-        if (e.target === updateModal) closeUpdateModalAndMarkSeen();
-    });
-}
-if (devTools) {
-  devTools.style.display = DEV_MODE ? 'flex' : 'none';
-
-  devTools.querySelectorAll('.dev-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const delta = parseFloat(btn.dataset.delta); // negativ
-      // Nur "technisch" ändern – ohne Streak/lastActiveDate zu beeinflussen:
-      state.hoursRemaining = Math.max(0, Math.min(state.maxHours, state.hoursRemaining + delta));
-      state.lastUpdate = Date.now();
-      save();
-      updateUI();
-    });
-  });
-}
-if (devModeToggle) {
-  devModeToggle.addEventListener('change', () => {
-    state.devMode = !!devModeToggle.checked;
-    save();
-
-    if (state.devMode) {
-      initDevSimIfNeeded();
-    } else {
-      resetDevSim();
+    if (!devTools) return;
+    devTools.style.display = state.devMode ? 'flex' : 'none';
+    
+    if (devSpeedBtn && devSandbox) {
+        devSpeedBtn.textContent = `⏩ Speed: ${devSandbox.speed}x (Dev)`;
+    } else if (devSpeedBtn) {
+        devSpeedBtn.textContent = `⏩ Speed: 1x (Dev)`;
     }
+}
 
+function toggleDevMode(enabled) {
+    state.devMode = enabled;
+    
+    if (enabled) {
+        // Sandbox erstellen (kopiert aktuellen Stand)
+        devSandbox = createDevSandbox();
+    } else {
+        // Sandbox komplett verwerfen -> zurück zum echten Stand
+        destroyDevSandbox();
+    }
+    
+    save();
     applyDevModeUI();
     updateUI();
-  });
 }
 
-
-
-maxHoursSlider.addEventListener('input', () => {
-    state.maxHours = parseInt(maxHoursSlider.value);
-    maxHoursValue.textContent = state.maxHours + ' Stunden';
-    if (state.hoursRemaining > state.maxHours) {
-        state.hoursRemaining = state.maxHours;
+// === DRAIN ===
+function drain() {
+    const now = Date.now();
+    
+    // ECHTE Zeit drainieren (nur wenn nicht Nacht)
+    if (!isNightTime()) {
+        const elapsedReal = (now - state.lastUpdate) / (1000 * 60 * 60);
+        state.hoursRemaining = Math.max(0, state.hoursRemaining - elapsedReal);
     }
+    state.lastUpdate = now;
+    
+    // SANDBOX Zeit drainieren (mit Speed-Multiplikator, ignoriert Nacht)
+    if (state.devMode && devSandbox) {
+        const elapsedSandbox = (now - devSandbox.lastUpdate) / (1000 * 60 * 60);
+        devSandbox.hoursRemaining = Math.max(0, devSandbox.hoursRemaining - elapsedSandbox * devSandbox.speed);
+        devSandbox.lastUpdate = now;
+    }
+    
     save();
     updateUI();
-});
+}
 
-activityHours.addEventListener('input', () => {
-    hoursDisplay.textContent = activityHours.value;
-});
-
-document.querySelectorAll('.emoji-option').forEach(el => {
-    el.addEventListener('click', () => {
-        document.querySelectorAll('.emoji-option').forEach(e => e.classList.remove('selected'));
-        el.classList.add('selected');
-        selectedEmoji = el.dataset.emoji;
-    });
-});
-
-editModal.addEventListener('click', (e) => {
-    if (e.target === editModal) closeEditModal();
-});
+// === EVENT LISTENER (alle mit onclick für Eindeutigkeit) ===
+function bindAllEvents() {
+    // Settings Button
+    const settingsBtn = $('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.onclick = openSettings;
+    }
+    
+    // Back Button
+    const backBtn = $('backBtn');
+    if (backBtn) {
+        backBtn.onclick = closeSettings;
+    }
+    
+    // Add Activity Button
+    const addActivityBtn = $('addActivityBtn');
+    if (addActivityBtn) {
+        addActivityBtn.onclick = () => openEditModal();
+    }
+    
+    // Modal Buttons
+    const cancelModal = $('cancelModal');
+    if (cancelModal) {
+        cancelModal.onclick = closeEditModal;
+    }
+    
+    const saveModal = $('saveModal');
+    if (saveModal) {
+        saveModal.onclick = saveActivity;
+    }
+    
+    // Reset Button
+    const resetBtn = $('resetBtn');
+    if (resetBtn) {
+        resetBtn.onclick = resetAllData;
+    }
+    
+    // Max Hours Slider
+    if (maxHoursSlider) {
+        maxHoursSlider.oninput = () => {
+            state.maxHours = parseInt(maxHoursSlider.value);
+            if (maxHoursValue) {
+                maxHoursValue.textContent = state.maxHours + ' Stunden';
+            }
+            if (state.hoursRemaining > state.maxHours) {
+                state.hoursRemaining = state.maxHours;
+            }
+            // Auch Sandbox updaten falls aktiv
+            if (devSandbox) {
+                devSandbox.maxHours = state.maxHours;
+                if (devSandbox.hoursRemaining > devSandbox.maxHours) {
+                    devSandbox.hoursRemaining = devSandbox.maxHours;
+                }
+            }
+            save();
+            updateUI();
+        };
+    }
+    
+    // Activity Hours Slider (im Modal)
+    if (activityHours) {
+        activityHours.oninput = () => {
+            if (hoursDisplay) {
+                hoursDisplay.textContent = activityHours.value;
+            }
+        };
+    }
+    
+    // Emoji Picker
+    if (emojiPicker) {
+        emojiPicker.onclick = (e) => {
+            const opt = e.target.closest('.emoji-option');
+            if (!opt) return;
+            
+            document.querySelectorAll('.emoji-option').forEach(el => el.classList.remove('selected'));
+            opt.classList.add('selected');
+            selectedEmoji = opt.dataset.emoji;
+        };
+    }
+    
+    // Edit Modal Overlay Click
+    if (editModal) {
+        editModal.onclick = (e) => {
+            if (e.target === editModal) closeEditModal();
+        };
+    }
+    
+    // Update Modal
+    if (closeUpdateModalBtn) {
+        closeUpdateModalBtn.onclick = closeUpdateModalAndMarkSeen;
+    }
+    if (updateModal) {
+        updateModal.onclick = (e) => {
+            if (e.target === updateModal) closeUpdateModalAndMarkSeen();
+        };
+    }
+    
+    // Dev Mode Toggle
+    if (devModeToggle) {
+        devModeToggle.onchange = () => {
+            toggleDevMode(devModeToggle.checked);
+        };
+    }
+    
+    // Activity Grid (Delegation)
+    if (activityGrid) {
+        activityGrid.onclick = (e) => {
+            const btn = e.target.closest('.activity-btn');
+            if (!btn) return;
+            
+            const id = parseInt(btn.dataset.id);
+            const act = state.activities.find(a => a.id === id);
+            if (!act) return;
+            
+            if (state.devMode && devSandbox) {
+                addHoursSandbox(act.hours, btn);
+            } else {
+                addHoursReal(act.hours, btn);
+            }
+        };
+    }
+    
+    // Settings Activities List (Delegation)
+    if (activitiesList) {
+        activitiesList.onclick = (e) => {
+            const editBtn = e.target.closest('.btn-edit');
+            if (editBtn) {
+                openEditModal(parseInt(editBtn.dataset.id));
+                return;
+            }
+            
+            const deleteBtn = e.target.closest('.btn-delete');
+            if (deleteBtn) {
+                deleteActivity(parseInt(deleteBtn.dataset.id));
+                return;
+            }
+        };
+    }
+    
+    // Dev Tools (Delegation)
+    if (devTools) {
+        devTools.onclick = (e) => {
+            if (!state.devMode || !devSandbox) return;
+            
+            // Minus Buttons
+            const deltaBtn = e.target.closest('.dev-btn[data-delta]');
+            if (deltaBtn) {
+                const delta = parseFloat(deltaBtn.dataset.delta);
+                addHoursSandbox(delta, null);
+                return;
+            }
+            
+            // Speed Button
+            const speedBtn = e.target.closest('#devSpeedBtn');
+            if (speedBtn) {
+                const idx = DEV_SPEEDS.indexOf(devSandbox.speed);
+                devSandbox.speed = DEV_SPEEDS[(idx + 1) % DEV_SPEEDS.length];
+                devSandbox.lastUpdate = Date.now();
+                devSpeedBtn.textContent = `⏩ Speed: ${devSandbox.speed}x (Dev)`;
+                updateUI();
+                return;
+            }
+        };
+    }
+}
 
 // === START ===
 load();
 showVerse();
-updateUI();
 renderActivities();
-setupDevTools();
+renderChangelog();
 applyDevModeUI();
+updateUI();
 save();
+
+bindAllEvents();
+showUpdateModalIfNeeded();
+
+// Drain Timer (mit Schutz gegen Doppel-Interval)
 if (window.__sfDrainTimer) clearInterval(window.__sfDrainTimer);
 window.__sfDrainTimer = setInterval(drain, 1000);
-renderChangelog();
-showUpdateModalIfNeeded();
-bindActivityGridOnce();
-bindDevToolsOnce();
-
 
 // Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
-}
-
-function bindActivityGridOnce() {
-  if (!activityGrid) return;
-
-  // onclick überschreibt alte Handler -> verhindert Doppelungen
-  activityGrid.onclick = (e) => {
-    const btn = e.target.closest('.activity-btn');
-    if (!btn) return;
-
-    const id = Number(btn.dataset.id);
-    const act = state.activities.find(a => a.id === id);
-    if (!act) return;
-
-    addHours(act.hours, btn);
-  };
-}
-
-function bindDevToolsOnce() {
-  if (!devTools) return;
-
-  devTools.onclick = (e) => {
-    if (!state.devMode) return;
-    initDevSimIfNeeded();
-
-    // minus buttons
-    const deltaBtn = e.target.closest('.dev-btn[data-delta]');
-    if (deltaBtn) {
-      const delta = parseFloat(deltaBtn.dataset.delta);
-      devSim.hoursRemaining = clampHours(devSim.hoursRemaining + delta);
-      devSim.lastUpdate = Date.now();
-      updateUI();
-      return;
-    }
-
-    // speed button
-    const speedBtn = e.target.closest('#devSpeedBtn');
-    if (speedBtn) {
-      const idx = DEV_SPEEDS.indexOf(devSim.speed);
-      devSim.speed = DEV_SPEEDS[(idx + 1) % DEV_SPEEDS.length];
-      devSim.lastUpdate = Date.now();
-      devSpeedBtn.textContent = `⏩ Speed: ${devSim.speed}x (Dev)`;
-      updateUI();
-      return;
-    }
-  };
 }
