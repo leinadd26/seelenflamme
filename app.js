@@ -29,6 +29,8 @@ const defaultActivities = [
     { id: 6, icon: '💭', name: 'Stille Zeit', hours: 1 }
 ];
 
+const DEV_MODE = true; // für Release auf false setzen
+
 // === 100 BIBELVERSE ===
 const verses = [
     { text: "Denn Gott hat uns nicht gegeben den Geist der Furcht, sondern der Kraft und der Liebe und der Besonnenheit.", ref: "2. Timotheus 1:7" },
@@ -390,7 +392,7 @@ function renderSettingsActivities() {
 
 // === AKTIVITÄT ===
 function addHours(hours, btn) {
-    state.hoursRemaining = Math.min(state.maxHours, state.hoursRemaining + hours);
+    state.hoursRemaining = Math.max(0, Math.min(state.maxHours, state.hoursRemaining + hours));
     state.lastUpdate = Date.now();
     state.lastActiveDate = new Date().toDateString();
     
@@ -543,6 +545,21 @@ if (updateModal) {
     updateModal.addEventListener('click', (e) => {
         if (e.target === updateModal) closeUpdateModalAndMarkSeen();
     });
+}
+const devTools = document.getElementById('devTools');
+if (devTools) {
+  devTools.style.display = DEV_MODE ? 'flex' : 'none';
+
+  devTools.querySelectorAll('.dev-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const delta = parseFloat(btn.dataset.delta); // negativ
+      // Nur "technisch" ändern – ohne Streak/lastActiveDate zu beeinflussen:
+      state.hoursRemaining = Math.max(0, Math.min(state.maxHours, state.hoursRemaining + delta));
+      state.lastUpdate = Date.now();
+      save();
+      updateUI();
+    });
+  });
 }
 
 maxHoursSlider.addEventListener('input', () => {
