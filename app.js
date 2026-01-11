@@ -333,8 +333,9 @@ function updateUI() {
     // Text
     percentageEl.textContent = Math.round(percent) + '%';
     
-    const h = Math.floor(state.hoursRemaining);
-    const m = Math.round((state.hoursRemaining - h) * 60);
+    const totalMinutes = Math.max(0, Math.floor(state.hoursRemaining * 60));
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
     
     if (isNightTime()) {
         timeLeftEl.textContent = `🌙 Nachtruhe – Timer pausiert`;

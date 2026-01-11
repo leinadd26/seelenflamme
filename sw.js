@@ -1,4 +1,4 @@
-const CACHE = 'seelenflamme-v2';
+const CACHE = 'seelenflamme-1.0.0';
 const FILES = ['/', '/index.html', '/style.css', '/app.js', '/icon.png'];
 
 self.addEventListener('install', e => {
