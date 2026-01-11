@@ -1,3 +1,28 @@
+// ===== VERSION + CHANGELOG =====
+const APP_VERSION = "1.2.0";
+
+const CHANGELOG = [
+  {
+    version: "1.2.0",
+    date: "2026-01-11",
+    changes: [
+      "Timer pausiert nachts (22:00–07:00)",
+      "Flamme wird stufenweise grau statt kleiner",
+      "Overscroll/weißer Rand entfernt",
+      "Größere Vers-Auswahl + weniger Wiederholungen"
+    ]
+  },
+  {
+    version: "1.1.0",
+    date: "2026-01-10",
+    changes: [
+      "Settings-Seite (Aktivitäten bearbeiten, hinzufügen, löschen)",
+      "Gesamtzeit konfigurierbar"
+    ]
+  }
+];
+
+
 // === DEFAULT AKTIVITÄTEN ===
 const defaultActivities = [
     { id: 1, icon: '🙏', name: 'Gebet', hours: 2 },
@@ -142,6 +167,12 @@ const activityHours = $('activityHours');
 const hoursDisplay = $('hoursDisplay');
 const activityName = $('activityName');
 const emojiPicker = $('emojiPicker');
+const changelogEl = $('changelog');
+const appVersionEl = $('appVersion');
+const updateModal = $('updateModal');
+const appVersionModalEl = $('appVersionModal');
+const updateModalListEl = $('updateModalList');
+const closeUpdateModalBtn = $('closeUpdateModal');
 
 let editingActivityId = null;
 let selectedEmoji = '🙏';
@@ -189,6 +220,44 @@ function showVerse() {
     
     verseEl.textContent = `"${verse.text}"`;
     verseRefEl.textContent = verse.ref;
+}
+
+function renderChangelog() {
+    if (!changelogEl || !appVersionEl) return;
+
+    appVersionEl.textContent = APP_VERSION;
+
+    changelogEl.innerHTML = CHANGELOG.map(entry => `
+        <div class="changelog-item">
+          <div class="changelog-title">
+            <div>Version ${entry.version}</div>
+            <div class="changelog-date">${entry.date}</div>
+          </div>
+          <ul class="changelog-list">
+            ${entry.changes.map(c => `<li>${c}</li>`).join('')}
+          </ul>
+        </div>
+    `).join('');
+}
+
+function showUpdateModalIfNeeded() {
+    const lastSeen = localStorage.getItem('seelenflamme_lastSeenVersion') || "";
+    if (lastSeen === APP_VERSION) return;
+
+    // zeige Änderungen der aktuellen Version (erste im CHANGELOG)
+    const current = CHANGELOG.find(x => x.version === APP_VERSION) || CHANGELOG[0];
+
+    if (appVersionModalEl) appVersionModalEl.textContent = APP_VERSION;
+    if (updateModalListEl && current) {
+        updateModalListEl.innerHTML = current.changes.map(c => `<li>${c}</li>`).join('');
+    }
+
+    if (updateModal) updateModal.classList.add('open');
+}
+
+function closeUpdateModalAndMarkSeen() {
+    localStorage.setItem('seelenflamme_lastSeenVersion', APP_VERSION);
+    if (updateModal) updateModal.classList.remove('open');
 }
 
 // === SPEICHERN & LADEN ===
@@ -476,6 +545,14 @@ $('addActivityBtn').addEventListener('click', () => openEditModal());
 $('cancelModal').addEventListener('click', closeEditModal);
 $('saveModal').addEventListener('click', saveActivity);
 $('resetBtn').addEventListener('click', resetAllData);
+if (closeUpdateModalBtn) {
+    closeUpdateModalBtn.addEventListener('click', closeUpdateModalAndMarkSeen);
+}
+if (updateModal) {
+    updateModal.addEventListener('click', (e) => {
+        if (e.target === updateModal) closeUpdateModalAndMarkSeen();
+    });
+}
 
 maxHoursSlider.addEventListener('input', () => {
     state.maxHours = parseInt(maxHoursSlider.value);
@@ -510,6 +587,8 @@ updateUI();
 renderActivities();
 save();
 setInterval(drain, 1000);
+renderChangelog();
+showUpdateModalIfNeeded();
 
 // Service Worker
 if ('serviceWorker' in navigator) {

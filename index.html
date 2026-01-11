@@ -68,6 +68,15 @@
                 </div>
             </div>
 
+            <!-- Update Log -->
+<           div class="settings-section">
+                <h3>Update-Log</h3>
+                <div class="update-meta">
+            <div>Version: <span id="appVersion"></span></div>
+            </div>
+            <div class="changelog" id="changelog"></div>
+            </div>
+
             <!-- Aktivitäten -->
             <div class="settings-section">
                 <h3>📋 Aktivitäten</h3>
@@ -87,6 +96,17 @@
 
     <!-- EDIT AKTIVITÄT MODAL -->
     <div class="modal-overlay" id="editModal">
+        <!-- UPDATE MODAL -->
+<div class="modal-overlay" id="updateModal">
+  <div class="modal">
+    <h2>Update installiert</h2>
+    <p class="update-sub">Version <span id="appVersionModal"></span></p>
+    <ul class="update-list" id="updateModalList"></ul>
+    <div class="modal-buttons">
+      <button class="btn-save" id="closeUpdateModal">OK</button>
+    </div>
+  </div>
+</div>
         <div class="modal">
             <h2 id="modalTitle">Aktivität bearbeiten</h2>
             

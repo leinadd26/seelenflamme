@@ -562,3 +562,73 @@ main {
 .btn-cancel:active, .btn-save:active {
     transform: scale(0.98);
 }
+
+/* ====== UPDATE LOG ====== */
+.update-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 15px;
+    margin-bottom: 12px;
+    color: var(--text-light);
+}
+
+.changelog {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.changelog-item {
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 15px;
+}
+
+.changelog-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.changelog-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.changelog-list {
+    margin-top: 8px;
+    padding-left: 18px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.changelog-list li {
+    margin: 4px 0;
+}
+
+/* Update Modal */
+.update-sub {
+    margin-top: -8px;
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.update-list {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.update-list li {
+    margin: 6px 0;
+}
